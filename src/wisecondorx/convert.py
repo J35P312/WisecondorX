@@ -42,6 +42,7 @@ def wcx_convert(
     ),
     binsize: int = typer.Option(5000, "--binsize", help="Bin size (bp)"),
     rmdup: bool = typer.Option(True, "--rmdup", help="Remove duplicates"),
+    mapping_quality: int = typer.Option(20, "--mapping_quality", help="Minimum mapping quality"),
 ) -> None:
     """
     Convert and filter aligned reads to .npz format.
@@ -120,7 +121,11 @@ def wcx_convert(
             chr_name = "24"
 
         for read in bam_chr:
+
             if read.is_paired:
+                if not read.is_read1:
+                    continue
+
                 if not read.is_proper_pair:
                     reads_pairf += 1
                     continue
@@ -131,7 +136,7 @@ def wcx_convert(
                 ):
                     reads_rmdup += 1
                 else:
-                    if read.mapping_quality >= 1:
+                    if read.mapping_quality >= mapping_quality:
                         location = read.pos / binsize
                         counts[int(location)] += 1
                     else:
@@ -144,7 +149,7 @@ def wcx_convert(
                 if rmdup and larp == read.pos:
                     reads_rmdup += 1
                 else:
-                    if read.mapping_quality >= 1:
+                    if read.mapping_quality >= mapping_quality:
                         location = read.pos / binsize
                         counts[int(location)] += 1
                     else:
